@@ -1,9 +1,7 @@
-#include <Ethernet.h>
 
- #include <SPI.h>
 #include <Servo.h>
 #include "mcp2515.h"
-#include <Wire.h>
+
 
 
 struct can_frame canMsg; // gelen mesaj
@@ -48,15 +46,15 @@ void setup()
     startMillis = millis(); // guncel zaman
 
     mcp2515.reset();
-    mcp2515.setBitrate(CAN_125KBPS);
+    mcp2515.setBitrate(CAN_125KBPS,MCP_8MHZ);
     mcp2515.setNormalMode();
 
-    on.attach(6, 1000, 2000);
+    
     arka.attach(3, 1000, 2000);
     onsa.attach(9, 1000, 2000);
-    onso.attach(5, 1000, 2000);
-   arsa.attach(10, 1000, 2000);
-   arso.attach(8, 1000, 2000);
+    onso.attach(10, 1000, 2000);
+   arsa.attach(6, 1000, 2000);
+   arso.attach(5, 1000, 2000);
 
 
 }
@@ -99,7 +97,7 @@ void loop()
             onsa_deger = 1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) + (valueJoyStick_Y_1 - 1500);
             onso_deger = 1500 + (valueJoyStick_X_2 - 1500) + (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500);
             arsa_deger = 1500 + (valueJoyStick_X_2 - 1500) + (valueJoyStick_Y_2 - 1500) + (valueJoyStick_Y_1 - 1500);
-            arso_deger = 3000-(1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500));
+            arso_deger = 1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500);
 
             Serial.println(onsa_deger);
             Serial.println(onso_deger);

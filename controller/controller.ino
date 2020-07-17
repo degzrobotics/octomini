@@ -38,7 +38,7 @@ void setup()
     SPI.begin();
 
     mcp2515.reset();
-    mcp2515.setBitrate(CAN_125KBPS);
+    mcp2515.setBitrate(CAN_125KBPS,MCP_8MHZ);
     mcp2515.setNormalMode();
 /*
     pinMode(4, OUTPUT);
@@ -110,8 +110,8 @@ void loop()
         valueJoyStick_X_1 = 1500;
     if (valueJoyStick_Y_1 < 1500 + sabitleme_toleransi / hizBoleni && valueJoyStick_Y_1 > 1500 - sabitleme_toleransi / hizBoleni)
         valueJoyStick_Y_1 = 1500;
-    if (valueJoyStick_X_2 < 1470 + sabitleme_toleransi / hizBoleni && valueJoyStick_X_2 > 1470 - sabitleme_toleransi / hizBoleni)
-        valueJoyStick_X_2 = 500;
+    if (valueJoyStick_X_2 < 1500 + sabitleme_toleransi / hizBoleni && valueJoyStick_X_2 > 1500 - sabitleme_toleransi / hizBoleni)
+        valueJoyStick_X_2 = 1500;
     if (valueJoyStick_Y_2 < 1500 + sabitleme_toleransi / hizBoleni && valueJoyStick_Y_2 > 1500 - sabitleme_toleransi / hizBoleni)
         valueJoyStick_Y_2 = 1500;
 

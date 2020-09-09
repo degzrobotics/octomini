@@ -2,7 +2,13 @@
 #include <Servo.h>
 #include "mcp2515.h"
 
-
+#define maxdeger 1940 //max 2000 oluyor escler 1000-2000 arası calisir
+#define mindeger 1060
+//Motorları tersine çevirmek için açıklama satırlarını iptal edin
+//#define TERSONSAG
+//#define TERSONSOL
+//#define TERSARKASOL 
+//#define TERSARKASAG 
 
 struct can_frame canMsg; // gelen mesaj
 struct can_frame canSnd; // giden mesaj
@@ -14,13 +20,13 @@ int valueJoyStick_Y_1 = 0;
 int valueJoyStick_X_2 = 0;
 int valueJoyStick_Y_2 = 0;
 
-unsigned long startMillis; //program süre sayıcısının başlangıç zaman değişkeni
-unsigned long currentMillis;
-const unsigned long period = 1000; // basınç sensörü ölçüm aralığı
 
-Servo on, arka, onsa, onso, arsa, arso;
+Servo yukselis, onsa, onso, arsa, arso;
 
-int on_deger, arka_deger, onsa_deger, onso_deger, arsa_deger, arso_deger;
+int yuk_deger, onsa_deger, onso_deger, arsa_deger, arso_deger;
+
+int canbus_deadline=1000;
+int lasttime,currenttime;
 
 union ArrayToInteger {
     byte array[2];
@@ -33,45 +39,39 @@ union ArrayToDouble {
 } doubler;
 
 
-
-//Create variables to store results
-float temperature_c;
-double pressure_abs;
-
-void setup()
+void setup() 
 {
     Serial.begin(115200);
     Serial.println("Basladi.");
     SPI.begin();
-    startMillis = millis(); // guncel zaman
+
 
     mcp2515.reset();
     mcp2515.setBitrate(CAN_125KBPS,MCP_8MHZ);
     mcp2515.setNormalMode();
 
     
-    arka.attach(3, 1000, 2000);
-    onsa.attach(9, 1000, 2000);
-    onso.attach(10, 1000, 2000);
-   arsa.attach(6, 1000, 2000);
-   arso.attach(5, 1000, 2000);
+    yukselis.attach(3, 1000, 2000);
+    onsa.attach(5, 1000, 2000);
+    onso.attach(6, 1000, 2000);
+   arsa.attach(9, 1000, 2000);
+   arso.attach(10, 1000, 2000);
 
 
+              
+              
 }
 
 void loop()
 {
-    currentMillis = millis();
-
+currenttime=millis();
     if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK)
     {
-    
-        Serial.print(" "); 
     Serial.print(canMsg.can_id, HEX); // print ID
     Serial.print(" "); 
     Serial.print(canMsg.can_dlc, HEX); // print DLC
     Serial.print(" ");
-    //
+
     for (int i = 0; i<canMsg.can_dlc; i++)  {  // print the data
       Serial.print(canMsg.data[i],HEX);
       Serial.print(" ");
@@ -92,34 +92,39 @@ void loop()
                     valueJoyStick_Y_2 = converter.integer;
             }
 
-            on.writeMicroseconds(valueJoyStick_X_1);
-            arka.writeMicroseconds(valueJoyStick_X_1);
-            onsa_deger = 1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) + (valueJoyStick_Y_1 - 1500);
-            onso_deger = 1500 + (valueJoyStick_X_2 - 1500) + (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500);
-            arsa_deger = 1500 + (valueJoyStick_X_2 - 1500) + (valueJoyStick_Y_2 - 1500) + (valueJoyStick_Y_1 - 1500);
-            arso_deger = 1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500);
-
+            //Joystick değerlerinin anlamlı verilere dönüştürülmesi
+            // Bu kısım itici dizilimine göre değiştirilir.
+            // Joystickleri analiz edip her motor için etkisinin + ve - değerleri ile belirlenmesi gereklidir.
+            yukselis.writeMicroseconds(valueJoyStick_X_1);
+            onsa_deger = 1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500);
+            onso_deger = 1500 + (valueJoyStick_X_2 - 1500) + (valueJoyStick_Y_2 - 1500) + (valueJoyStick_Y_1 - 1500);
+            arsa_deger = 1500 + (valueJoyStick_X_2 - 1500) + (valueJoyStick_Y_2 - 1500) - (valueJoyStick_Y_1 - 1500);
+            arso_deger = 1500 + (valueJoyStick_X_2 - 1500) - (valueJoyStick_Y_2 - 1500) + (valueJoyStick_Y_1 - 1500);
+            #ifdef TERSONSOL
+            onso_deger=3000-onso_deger;
+            #endif
+            #ifdef TERSONSAG
+            onsa_deger=3000-onsa_deger;
+            #endif
+            #ifdef TERSARKASOL
+            arso_deger=3000-arso_deger;
+            #endif
+            #ifdef TERSARKASAG
+            arsa_deger=3000-arsa_deger;
+            #endif
             Serial.println(onsa_deger);
             Serial.println(onso_deger);
             Serial.println(arsa_deger);
             Serial.println(arso_deger);
             
-            if (onsa_deger >= 2000)
-                onsa_deger = 2000;
-            else if (onsa_deger <= 1000)
-                onsa_deger = 1000;
-            if (arsa_deger >= 2000)
-                arsa_deger = 2000;
-            else if (arsa_deger <= 1000)
-                onsa_deger = 1000;
-            if (onso_deger >= 2000)
-                onso_deger = 2000;
-            else if (onso_deger <= 1000)
-                onsa_deger = 1000;
-            if (arso_deger >= 2000)
-                arso_deger = 2000;
-            else if (arso_deger <= 1000)
-                onsa_deger = 1000;
+            if (onsa_deger >= maxdeger) onsa_deger = maxdeger;
+            else if (onsa_deger <= mindeger) onsa_deger = mindeger;
+            if (arsa_deger >= maxdeger) arsa_deger = maxdeger;
+            else if (arsa_deger <= mindeger) arsa_deger = mindeger;
+            if (onso_deger >= maxdeger) onso_deger = maxdeger;
+            else if (onso_deger <= mindeger) onso_deger = mindeger;
+            if (arso_deger >= maxdeger) arso_deger = maxdeger;
+            else if (arso_deger <= mindeger) arso_deger = mindeger;
               onsa.writeMicroseconds(onsa_deger);
               onso.writeMicroseconds(onso_deger);
               arsa.writeMicroseconds(arsa_deger);
@@ -134,30 +139,17 @@ void loop()
             Serial.print("--");
             Serial.print(valueJoyStick_Y_2);
             Serial.println("--"); 
+            
         }
+        lasttime=currenttime;
     }
-    
-    /*if (currentMillis - startMillis >= period) //test whether the period has elapsed
+    else if(currenttime-lasttime>canbus_deadline)
     {
-
-
-        Serial.println(pressure_abs);
-        Serial.println(temperature_c);
-
-        canSnd.can_id = 0x03;
-        canSnd.can_dlc = 8;
-        doubler.number = pressure_abs;
-        canSnd.data[0] = doubler.array[0];
-        canSnd.data[1] = doubler.array[1];
-        canSnd.data[2] = doubler.array[2];
-        canSnd.data[3] = doubler.array[3];
-        doubler.number = temperature_c;
-        canSnd.data[4] = doubler.array[0];
-        canSnd.data[5] = doubler.array[1];
-        canSnd.data[6] = doubler.array[2];
-        canSnd.data[7] = doubler.array[3];
-
-        startMillis = currentMillis; //IMPORTANT to save the start time of the current LED state.
-        mcp2515.sendMessage(&canSnd);
-    }*/
+              yukselis.writeMicroseconds(1500);
+              onsa.writeMicroseconds(1500);
+              onso.writeMicroseconds(1500);
+              arsa.writeMicroseconds(1500);
+              arso.writeMicroseconds(1500);
+              lasttime=currenttime;
+    }
 }

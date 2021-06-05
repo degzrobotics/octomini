@@ -1,6 +1,6 @@
 
 #include <Servo.h>
-#include "mcp2515.h"
+#include <mcp2515.h>
 
 #define maxdeger 1940 //max 2000 oluyor escler 1000-2000 arası calisir
 #define mindeger 1060
